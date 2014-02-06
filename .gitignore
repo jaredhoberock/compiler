@@ -1,0 +1,5 @@
+.sconsign.dblite
+*.o
+*.ll.*
+*.yy.*
+*.hh
