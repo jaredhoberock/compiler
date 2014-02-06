@@ -31,9 +31,24 @@ class driver;
 #include "driver.hpp"
 }
 
-%token END 0 "end of file"
+%token
+  END 0      "end of file"
+  LPAREN     "("
+  RPAREN     ")"
+  PLUS       "+"
+  MINUS      "-"
+  MULTIPLIES "*"
+  DIVIDES    "/"
+;
 %token <std::string> IDENTIFIER "identifier"
 %token <double>      NUMBER     "number"
+
+%type <double> numberexpr
+%type <std::string> identifierexpr
+
+%left PLUS MINUS
+%left MULTIPLIES DIVIDES
+%precedence UNARY_PLUS UNARY_MINUS
 
 %printer { yyoutput << $$; } <*>;
 
@@ -41,8 +56,29 @@ class driver;
 %start primary;
 
 primary:
-  "identifier" {std::cout << "parser: found identifier: " << $1 << std::endl;}
-| "number"     {std::cout << "parser: found number: " << $1 << std::endl;}
+  identifierexpr {std::cout << "parser: found primary. " << std::endl;}
+| numberexpr     {std::cout << "parser: found primary. " << std::endl;}
+| parenexpr      {std::cout << "parser: found primary. " << std::endl;}
+
+numberexpr: "number" { $$ = $1; std::cout << "parser: found number: " << $1 << std::endl;}
+
+identifierexpr: "identifier" { $$ = $1; std::cout << "parser: found identifier: " << $1 << std::endl;}
+
+expr:
+  identifierexpr {std::cout << "parser: found expression." << std::endl;}
+| numberexpr     {std::cout << "parser: found expression." << std::endl;}
+| parenexpr      {std::cout << "parser: found expression." << std::endl;}
+| arithexpr      {std::cout << "parser: found expression." << std::endl;}
+
+parenexpr: "(" expr ")" {std::cout << "found parenexpr" << std::endl;}
+
+arithexpr:
+  expr "+" expr {std::cout << "found arithexpr" << std::endl;}
+| expr "-" expr {std::cout << "found arithexpr" << std::endl;}
+| expr "*" expr {std::cout << "found arithexpr" << std::endl;}
+| expr "/" expr {std::cout << "found arithexpr" << std::endl;}
+| "+" expr %prec UNARY_PLUS  {std::cout << "found arithexpr" << std::endl;}
+| "-" expr %prec UNARY_MINUS {std::cout << "found arithexpr" << std::endl;}
 %%
 
 void yy::parser::error(const location_type &l, const std::string &m)

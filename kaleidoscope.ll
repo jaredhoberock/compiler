@@ -15,7 +15,7 @@ static yy::location loc;
 
 IDENTIFIER [a-zA-Z][a-zA-Z_0-9]*
 BLANK [ \t]
-NUMBER [-+]?[0-9]*\.?[0-9]*
+NUMBER [0-9]*\.?[0-9]*
 
 %{
   // code run each time a pattern is matched
@@ -34,6 +34,12 @@ NUMBER [-+]?[0-9]*\.?[0-9]*
 {IDENTIFIER}    return yy::parser::make_IDENTIFIER(yytext, loc);
 {NUMBER}        return yy::parser::make_NUMBER(std::atof(yytext), loc);
 
+"("     return yy::parser::make_LPAREN(loc);
+")"     return yy::parser::make_RPAREN(loc);
+"+"     return yy::parser::make_PLUS(loc);
+"-"     return yy::parser::make_MINUS(loc);
+"*"     return yy::parser::make_MULTIPLIES(loc);
+"/"     return yy::parser::make_DIVIDES(loc);
 <<EOF>> return yy::parser::make_END(loc);
 %%
 
