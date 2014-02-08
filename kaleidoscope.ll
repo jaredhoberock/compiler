@@ -31,6 +31,9 @@ NUMBER [0-9]*\.?[0-9]*
 
 [\n]+    loc.lines(yyleng); loc.step();
 
+"def"    return yy::parser::make_DEF(loc);
+"extern" return yy::parser::make_EXTERN(loc);
+
 {IDENTIFIER}    return yy::parser::make_IDENTIFIER(yytext, loc);
 {NUMBER}        return yy::parser::make_NUMBER(std::atof(yytext), loc);
 
@@ -40,6 +43,7 @@ NUMBER [0-9]*\.?[0-9]*
 "-"     return yy::parser::make_MINUS(loc);
 "*"     return yy::parser::make_MULTIPLIES(loc);
 "/"     return yy::parser::make_DIVIDES(loc);
+";"     return yy::parser::make_SEMICOLON(loc);
 <<EOF>> return yy::parser::make_END(loc);
 %%
 

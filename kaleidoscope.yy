@@ -39,6 +39,9 @@ class driver;
   MINUS      "-"
   MULTIPLIES "*"
   DIVIDES    "/"
+  SEMICOLON  ";"
+  DEF        "def"
+  EXTERN     "extern"
 ;
 %token <std::string> IDENTIFIER "identifier"
 %token <double>      NUMBER     "number"
@@ -53,12 +56,16 @@ class driver;
 %printer { yyoutput << $$; } <*>;
 
 %%
-%start primary;
+%start program;
 
-primary:
-  identifierexpr {std::cout << "parser: found primary. " << std::endl;}
-| numberexpr     {std::cout << "parser: found primary. " << std::endl;}
-| parenexpr      {std::cout << "parser: found primary. " << std::endl;}
+program:
+  statement program {}
+| {}
+
+statement:
+  expr ";"       {std::cout << "parser: found statement (expr)." << std::endl;}
+| definition ";" {std::cout << "parser: found statement (definition)." << std::endl;}
+| extern ";"     {std::cout << "parser: found statement (extern)." << std::endl;}
 
 numberexpr: "number" { $$ = $1; std::cout << "parser: found number: " << $1 << std::endl;}
 
@@ -79,6 +86,16 @@ arithexpr:
 | expr "/" expr {std::cout << "found arithexpr" << std::endl;}
 | "+" expr %prec UNARY_PLUS  {std::cout << "found arithexpr" << std::endl;}
 | "-" expr %prec UNARY_MINUS {std::cout << "found arithexpr" << std::endl;}
+
+definition: "def" prototype expr {std::cout << "found definition" << std::endl;}
+
+extern: "extern" prototype {std::cout << "found extern" << std::endl;}
+
+prototype: "identifier" "(" parameter_list ")" {std::cout << "found prototype" << std::endl;}
+
+parameter_list:
+  "identifier" parameter_list {std::cout << "found parameter" << std::endl;}
+|                             {std::cout << "found empty parameter list" << std::endl;}
 %%
 
 void yy::parser::error(const location_type &l, const std::string &m)
