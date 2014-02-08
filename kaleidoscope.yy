@@ -12,6 +12,7 @@
 {
 #include <string>
 class driver;
+#include "ast.hpp"
 }
 
 %param { driver &context }
@@ -46,14 +47,21 @@ class driver;
 %token <std::string> IDENTIFIER "identifier"
 %token <double>      NUMBER     "number"
 
-%type <double> numberexpr
-%type <std::string> identifierexpr
+%type <number_expr_ast*>         numberexpr
+%type <variable_expr_ast*>       identifierexpr
+%type <expr_ast*>                parenexpr
+%type <expr_ast*>                expr
+%type <binary_expr_ast*>         arithexpr
+%type <std::vector<std::string>> parameter_list
+%type <prototype_ast*>           prototype
+%type <function_ast*>            extern
+%type <function_ast*>            definition
 
 %left PLUS MINUS
 %left MULTIPLIES DIVIDES
 %precedence UNARY_PLUS UNARY_MINUS
 
-%printer { yyoutput << $$; } <*>;
+//%printer { yyoutput << $$; } <*>;
 
 %%
 %start program;
@@ -67,35 +75,35 @@ statement:
 | definition ";" {std::cout << "parser: found statement (definition)." << std::endl;}
 | extern ";"     {std::cout << "parser: found statement (extern)." << std::endl;}
 
-numberexpr: "number" { $$ = $1; std::cout << "parser: found number: " << $1 << std::endl;}
+numberexpr: "number" { $$ = new number_expr_ast($1); }
 
-identifierexpr: "identifier" { $$ = $1; std::cout << "parser: found identifier: " << $1 << std::endl;}
+identifierexpr: "identifier" { $$ = new variable_expr_ast($1); }
 
 expr:
-  identifierexpr {std::cout << "parser: found expression." << std::endl;}
-| numberexpr     {std::cout << "parser: found expression." << std::endl;}
-| parenexpr      {std::cout << "parser: found expression." << std::endl;}
-| arithexpr      {std::cout << "parser: found expression." << std::endl;}
+  identifierexpr { $$ = $1; }
+| numberexpr     { $$ = $1; }
+| parenexpr      { $$ = $1; }
+| arithexpr      { $$ = $1; }
 
-parenexpr: "(" expr ")" {std::cout << "found parenexpr" << std::endl;}
+parenexpr: "(" expr ")" { $$ = $2; }
 
 arithexpr:
-  expr "+" expr {std::cout << "found arithexpr" << std::endl;}
-| expr "-" expr {std::cout << "found arithexpr" << std::endl;}
-| expr "*" expr {std::cout << "found arithexpr" << std::endl;}
-| expr "/" expr {std::cout << "found arithexpr" << std::endl;}
+  expr "+" expr { $$ = new binary_expr_ast('+', $1, $3); }
+| expr "-" expr { $$ = new binary_expr_ast('-', $1, $3); }
+| expr "*" expr { $$ = new binary_expr_ast('*', $1, $3); }
+| expr "/" expr { $$ = new binary_expr_ast('/', $1, $3); }
 | "+" expr %prec UNARY_PLUS  {std::cout << "found arithexpr" << std::endl;}
 | "-" expr %prec UNARY_MINUS {std::cout << "found arithexpr" << std::endl;}
 
-definition: "def" prototype expr {std::cout << "found definition" << std::endl;}
+definition: "def" prototype expr { $$ = new function_ast($2, $3); }
 
-extern: "extern" prototype {std::cout << "found extern" << std::endl;}
+extern: "extern" prototype { $$ = new function_ast($2, 0); }
 
-prototype: "identifier" "(" parameter_list ")" {std::cout << "found prototype" << std::endl;}
+prototype: "identifier" "(" parameter_list ")" { $$ = new prototype_ast($1, $3); }
 
 parameter_list:
-  "identifier" parameter_list {std::cout << "found parameter" << std::endl;}
-|                             {std::cout << "found empty parameter list" << std::endl;}
+  "identifier" parameter_list { $2.push_back($1); $$ = $2; }
+|                             { $$ = std::vector<std::string>(); }
 %%
 
 void yy::parser::error(const location_type &l, const std::string &m)
