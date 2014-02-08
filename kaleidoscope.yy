@@ -21,7 +21,7 @@ class driver;
 %initial-action
 {
   // initialize the initial location
-  @$.begin.filename = @$.end.filename = &context.filename;
+  @$.begin.filename = @$.end.filename = &context.filename();
 }
 
 %define parse.trace
@@ -30,6 +30,7 @@ class driver;
 %code
 {
 #include "driver.hpp"
+#include "yylex_decl.hpp"
 }
 
 %token
@@ -71,9 +72,9 @@ program:
 | {}
 
 statement:
-  expr ";"       {std::cout << "parser: found statement (expr)." << std::endl;}
-| definition ";" {std::cout << "parser: found statement (definition)." << std::endl;}
-| extern ";"     {std::cout << "parser: found statement (extern)." << std::endl;}
+  expr ";"       { $1->codegen(context); }
+| definition ";" { $1->codegen(context); }
+| extern ";"     { $1->codegen(context); }
 
 numberexpr: "number" { $$ = new number_expr_ast($1); }
 

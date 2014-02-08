@@ -2,13 +2,7 @@
 
 #include <string>
 #include <vector>
-#include <llvm/IR/Module.h>
-#include <llvm/PassManager.h>
-#include <llvm/ExecutionEngine/ExecutionEngine.h>
-
-extern llvm::Module *the_module;
-extern llvm::FunctionPassManager *the_fpm;
-extern llvm::ExecutionEngine *the_execution_engine;
+#include "driver.hpp"
 
 // base class for all expression nodes
 class expr_ast
@@ -16,7 +10,7 @@ class expr_ast
   public:
     inline virtual ~expr_ast(){};
 
-    virtual llvm::Value *codegen() = 0;
+    virtual llvm::Value *codegen(driver &context) = 0;
 };
 
 class number_expr_ast : public expr_ast
@@ -24,7 +18,7 @@ class number_expr_ast : public expr_ast
   public:
     inline number_expr_ast(double val) : m_val(val) {}
 
-    virtual llvm::Value *codegen();
+    virtual llvm::Value *codegen(driver &context);
 
   private:
     double m_val;
@@ -35,7 +29,7 @@ class variable_expr_ast : public expr_ast
   public:
     variable_expr_ast(const std::string &name) : m_name(name) {}
 
-    virtual llvm::Value *codegen();
+    virtual llvm::Value *codegen(driver &context);
 
   private:
     std::string m_name;
@@ -48,7 +42,7 @@ class binary_expr_ast : public expr_ast
       : m_op(op), m_lhs(lhs), m_rhs(rhs)
     {}
 
-    virtual llvm::Value *codegen();
+    virtual llvm::Value *codegen(driver &context);
 
   private:
     char m_op;
@@ -62,7 +56,7 @@ class call_expr_ast : public expr_ast
       : m_callee(callee), m_args(args)
     {}
 
-    virtual llvm::Value *codegen();
+    virtual llvm::Value *codegen(driver &context);
 
   private:
     std::string m_callee;
@@ -76,7 +70,7 @@ class prototype_ast
       : m_name(name), m_args(args)
     {}
 
-    virtual llvm::Function *codegen();
+    virtual llvm::Function *codegen(driver &context);
 
   private:
     std::string m_name;
@@ -90,7 +84,7 @@ class function_ast
       : m_proto(proto), m_body(body)
     {}
 
-    virtual llvm::Function *codegen();
+    virtual llvm::Function *codegen(driver &context);
 
   private:
     prototype_ast *m_proto;
@@ -106,7 +100,7 @@ class if_expr_ast : public expr_ast
         m_else_expr(else_expr)
     {}
 
-    virtual llvm::Value *codegen();
+    virtual llvm::Value *codegen(driver &context);
 
   private:
     expr_ast *m_cond, *m_then_expr, *m_else_expr;
@@ -127,7 +121,7 @@ class for_expr_ast : public expr_ast
         m_body(body)
     {}
 
-    virtual llvm::Value *codegen();
+    virtual llvm::Value *codegen(driver &context);
 
   private:
     std::string m_variable_name;
